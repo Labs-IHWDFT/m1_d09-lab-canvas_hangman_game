@@ -1,14 +1,65 @@
-class Hangman {
-  constructor(words) {
+class HangmanGame {
+  constructor(words, canvas) {
     this.words = words;
-    this.letters = [];
-    this.guessedLetters = "";
-    this.errorsLeft = 10;
+    this.canvasWriter = new CanvasWriter(canvas);
+    this.secretWord = "";
+    this.lettersLeft = [];
+    this.wrongLetters = [];
+    this.maxErrors = 10;
+
+    document.addEventListener("keydown", this.handleKeypress.bind(this));
+  }
+
+  start() {
     this.secretWord = this.pickWord();
+    this.lettersLeft = this.getUniqueLetters(); // returns an array of unique letters in the secretWord
+    this.wrongLetters = [];
+    this.canvasWriter.init(this.secretWord.length);
+  }
+
+  handleKeypress(event) {
+    if (
+      this.checkIfLetter(event.keyCode) &&
+      !this.checkLetterAlreadyClicked(event.key)
+    ) {
+      if (this.secretWord.includes(event.key)) {
+        this.removeFromLettersLeft(event.key);
+        const positions = this.secretWord
+          .split("")
+          .reduce((positions, letter, idx) => {
+            if (letter === event.key) positions.push(idx);
+            return positions;
+          }, []);
+        this.canvasWriter.drawCorrectLetter(event.key, positions);
+
+        if (this.checkWinner()) {
+          console.log("YOU WON!");
+          this.canvasWriter.drawGameWon();
+        }
+      } else {
+        this.addToWrongLetters(event.key);
+        this.canvasWriter.drawWrongLetters(this.wrongLetters);
+        this.canvasWriter.drawHangman(this.wrongLetters.length);
+        if (this.checkGameOver()) {
+          console.log("GAME OVER!");
+          this.canvasWriter.drawGameOver();
+        }
+      }
+    }
   }
 
   pickWord() {
-    return this.words[Math.floor(Math.random() * this.words.length)];
+    const secretWord =
+      this.words[Math.floor(Math.random() * this.words.length)];
+    console.log(secretWord);
+    return secretWord;
+  }
+
+  getUniqueLetters() {
+    return this.secretWord.split("").reduce((uniques, letter) => {
+      if (!uniques.includes(letter)) uniques.push(letter);
+      return uniques;
+    }, []);
   }
 
   checkIfLetter(keyCode) {
@@ -16,70 +67,24 @@ class Hangman {
     return false;
   }
 
-  checkClickedLetters(letter) {
-    return !this.letters.includes(letter);
+  checkLetterAlreadyClicked(letter) {
+    return this.wrongLetters.includes(letter);
   }
 
-  addCorrectLetter(letter) {
-    this.guessedLetters += letter;
+  removeFromLettersLeft(letter) {
+    const indexOfLetter = this.lettersLeft.indexOf(letter);
+    if (indexOfLetter !== -1) this.lettersLeft.splice(indexOfLetter, 1);
   }
 
-  addWrongLetter(letter) {
-    this.errorsLeft--;
+  addToWrongLetters(letter) {
+    this.wrongLetters.push(letter);
   }
 
   checkGameOver() {
-    return this.errorsLeft < 1;
+    return this.wrongLetters.length >= this.maxErrors;
   }
 
   checkWinner() {
-    if (this.secretWord.length === this.guessedLetters.length) return true;
-    return false;
-    // return this.secretWord.split('').every(character => this.guessedLetters.includes(character));
+    return this.lettersLeft.length <= 0;
   }
 }
-
-let hangman;
-
-const startGameButton = document.getElementById("start-game-button");
-
-if (startGameButton) {
-  startGameButton.addEventListener("click", (event) => {
-    hangman = new Hangman([
-      "node",
-      "javascript",
-      "react",
-      "miami",
-      "paris",
-      "amsterdam",
-      "lisboa",
-    ]);
-
-    // HINT (uncomment when start working on the canvas portion of the lab)
-    hangman.secretWord = hangman.pickWord();
-    hangmanCanvas = new HangmanCanvas(hangman.secretWord);
-    hangmanCanvas.createBoard();
-    hangmanCanvas.drawLines();
-  });
-}
-
-document.addEventListener("keydown", (event) => {
-  // React to user pressing a key
-  if (hangman.checkIfLetter(event.keyCode)) {
-    if (hangman.secretWord.includes(event.key)) {
-      let index = hangman.secretWord.indexOf(event.key);
-      hangmanCanvas.writeCorrectLetter(index);
-
-      if (hangman.checkWinner()) {
-        hangmanCanvas.winner();
-      } else {
-        hangman.addWrongLetter(event.key);
-        hangmanCanvas.writeWrongLetter(hangman.letters, hangman.errorsLeft);
-
-        if (hangman.checkGameOver()) {
-          hangmanCanvas.gameOver();
-        }
-      }
-    }
-  }
-});
