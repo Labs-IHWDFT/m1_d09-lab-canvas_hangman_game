@@ -1,13 +1,13 @@
 class HangmanGame {
   constructor(words, canvas) {
     this.words = words;
-    this.canvasWriter = new CanvasWriter(canvas);
     this.secretWord = "";
     this.lettersLeft = [];
     this.wrongLetters = [];
-    this.maxErrors = 10;
-
-    document.addEventListener("keydown", this.handleKeypress.bind(this));
+    this.canvasWriter = new CanvasWriter(canvas);
+    this.maxErrors = this.canvasWriter.maxErrors;
+    this.isGameOn = false;
+    this.handleKeypress = this.handleKeypress.bind(this);
   }
 
   start() {
@@ -15,15 +15,17 @@ class HangmanGame {
     this.lettersLeft = this.getUniqueLetters(); // returns an array of unique letters in the secretWord
     this.wrongLetters = [];
     this.canvasWriter.init(this.secretWord.length);
+    this.isGameOn = true;
   }
 
   handleKeypress(event) {
     if (
-      this.checkIfLetter(event.keyCode) &&
-      !this.checkLetterAlreadyClicked(event.key)
+      this.isGameOn &&
+      this.isLetter(event.keyCode) &&
+      !this.isAlreadyClicked(event.key)
     ) {
       if (this.secretWord.includes(event.key)) {
-        this.removeFromLettersLeft(event.key);
+        this.removeGuessedLetter(event.key);
         const positions = this.secretWord
           .split("")
           .reduce((positions, letter, idx) => {
@@ -34,14 +36,16 @@ class HangmanGame {
 
         if (this.checkWinner()) {
           console.log("YOU WON!");
+          this.isGameOn = false;
           this.canvasWriter.drawGameWon();
         }
       } else {
-        this.addToWrongLetters(event.key);
-        this.canvasWriter.drawWrongLetters(this.wrongLetters);
+        this.addWrongLetter(event.key);
+        this.canvasWriter.drawWrongLetter(event.key, this.wrongLetters.length);
         this.canvasWriter.drawHangman(this.wrongLetters.length);
         if (this.checkGameOver()) {
           console.log("GAME OVER!");
+          this.isGameOn = false;
           this.canvasWriter.drawGameOver();
         }
       }
@@ -62,21 +66,21 @@ class HangmanGame {
     }, []);
   }
 
-  checkIfLetter(keyCode) {
+  isLetter(keyCode) {
     if (keyCode >= 65 && keyCode <= 90) return true;
     return false;
   }
 
-  checkLetterAlreadyClicked(letter) {
+  isAlreadyClicked(letter) {
     return this.wrongLetters.includes(letter);
   }
 
-  removeFromLettersLeft(letter) {
+  removeGuessedLetter(letter) {
     const indexOfLetter = this.lettersLeft.indexOf(letter);
     if (indexOfLetter !== -1) this.lettersLeft.splice(indexOfLetter, 1);
   }
 
-  addToWrongLetters(letter) {
+  addWrongLetter(letter) {
     this.wrongLetters.push(letter);
   }
 

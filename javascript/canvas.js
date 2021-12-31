@@ -46,19 +46,18 @@ class CanvasWriter {
     }
   }
 
-  drawWrongLetters(letters) {
+  drawWrongLetter(letter, position) {
     this.context.font = "40px Georgia";
     const totRows = this.maxErrors / 2;
-    for (let i = 0; i < letters.length; i++) {
-      let row = Math.floor(i / totRows);
-      let col = i % totRows;
-      this.context.fillText(
-        letters[i].toUpperCase(),
-        1000 - 60 * col,
-        300 + 200 * row,
-        50
-      );
-    }
+    const index = position - 1;
+    let row = Math.floor(index / totRows);
+    let col = index % totRows;
+    this.context.fillText(
+      letter.toUpperCase(),
+      1000 - 60 * col,
+      300 + 200 * row,
+      50
+    );
   }
 
   drawHangman(errors) {

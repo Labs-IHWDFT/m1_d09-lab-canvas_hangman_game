@@ -27,3 +27,5 @@ if (startGameButton) {
     startGameButton.innerText = "RESTART";
   });
 }
+
+document.addEventListener("keydown", hangmanGame.handleKeypress);
